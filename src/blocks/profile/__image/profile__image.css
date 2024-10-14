@@ -7,6 +7,25 @@
   background-size: cover;
   background-position: center;
   margin: 0 29px 0 0;
+  position: relative;
+}
+
+.profile__image::after {
+  content: '';
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  top: 0;
+  right: 0;
+  background: url('../../../images/edit-profile.svg') center no-repeat;
+  background-color: rgba(0, 0, 0, 0.5);
+  position: absolute;
+  visibility: hidden;
+}
+
+.profile__image:hover::after {
+  visibility: visible;
+  cursor: pointer;
 }
 
 @media screen and (max-width: 740px) {
