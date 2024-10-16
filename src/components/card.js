@@ -44,11 +44,11 @@ function pressLikeButton(evt) {
 
 function updateLikesNumber(evt, cardId, likesCounter) {
     if (evt.target.classList.contains('card__like-button_is-active')) {
-        addCardLike(cardId, likesCounter).then((result) => {           
+        addCardLike(cardId).then((result) => {           
                 likesCounter.textContent = result.likes.length;
                 }).catch((err) => {console.log(err)});
     } else {
-        deleteCardLike(cardId, likesCounter).then((result) => {
+        deleteCardLike(cardId).then((result) => {
                     likesCounter.textContent = result.likes.length;
                }).catch((err) => {console.log(err)});
     }
