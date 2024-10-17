@@ -1,7 +1,7 @@
 import "../pages/index.css"
 import { createCard, handleDelete, pressLikeButton} from "../components/card.js";
 import { openModal, closeModal, closeModalOverlay } from "../components/modal.js";
-import { clearValidation, setEventListeners } from "./validation.js";
+import { clearValidation, enableValidation } from "./validation.js";
 import { getInitialCards, getUserInfo, editUserInfo, addNewCard, editAvatar } from "./api.js";
 
 // DOM узлы
@@ -20,7 +20,7 @@ const imagePopupDesc = imagePopup.querySelector('.popup__caption');
 const newCardForm = popupAddCard.querySelector('.popup__form');
 const placeInput = newCardForm.querySelector('.popup__input_type_card-name');
 const linkInput = newCardForm.querySelector('.popup__input_type_url');
-const formEditProfile = document.querySelector('.popup_type_edit .popup__form');
+const formEditProfile = popupEditProfile.querySelector('.popup__form');
 const nameInput = formEditProfile.querySelector('.popup__input_type_name');
 const jobInput = formEditProfile.querySelector('.popup__input_type_description');
 const profileTitle = document.querySelector('.profile__title');
@@ -32,6 +32,14 @@ const buttonCloseImagePopup = imagePopup.querySelector('.popup__close');
 const buttonSubmitPopupEditAvatar = popupEditAvatar.querySelector('.popup__button');
 const buttonSubmitPopupEditProfile = popupEditProfile.querySelector('.popup__button');
 const buttonSubmitPopupAddCard = popupAddCard.querySelector('.popup__button');
+const validationConfig = {
+    formSelector: '.popup__form',
+    inputSelector: '.popup__input',
+    submitButtonSelector: '.popup__button',
+    inactiveButtonClass: 'button_inactive', 
+    inputErrorClass: '.form-input-error',
+    errorClass: 'form__input-error_active', 
+  };
 
 // функция открытия попапа с картинкой
 function zoomImg(evt, cardElement) {
@@ -44,18 +52,18 @@ function zoomImg(evt, cardElement) {
 // обработчики открытия и закрытия модальных окон
 profileImg.addEventListener('click', function () {
     formEditAvatar.reset();
-    clearValidation(formEditAvatar);
+    clearValidation(formEditAvatar, validationConfig);
     openModal(popupEditAvatar);
 })
 
 buttonOpenPopupEditProfile.addEventListener('click', function () {
-    nameInput.value = profileTitle.textContent, jobInput.value = profileDesc.textContent;
     openModal(popupEditProfile);
-    clearValidation(formEditProfile);
+    clearValidation(formEditProfile, validationConfig);
 });
+
 buttonOpenPopupAddCard.addEventListener('click', function() {
     newCardForm.reset();
-    clearValidation(newCardForm);
+    clearValidation(newCardForm, validationConfig);
     openModal(popupAddCard);
 });
 
@@ -90,17 +98,10 @@ formEditProfile.addEventListener('submit', submitEditProfileForm);
 // функция добавления новой карточки
 function submitAddCardForm(evt) {
     evt.preventDefault();
-    
-    const singleCard = {};
-    singleCard.name = placeInput.value;
-    singleCard.link = linkInput.value;
-    singleCard.desc = singleCard.name;
-    singleCard.likes = '';
-    
+     
     renderLoading(true, buttonSubmitPopupAddCard);
-    addNewCard(singleCard.name, singleCard.link).then(res => {
-        singleCard.owner = res.owner._id;
-        placesList.prepend(createCard(singleCard, handleDelete, pressLikeButton, zoomImg));
+    addNewCard(placeInput.value, linkInput.value).then(res => {
+        placesList.prepend(createCard(res, handleDelete, pressLikeButton, zoomImg, res.owner._id));
     })
     .catch((err) => {
         console.log(err);
@@ -132,39 +133,27 @@ function submitEditAvatarForm(evt) {
 
 formEditAvatar.addEventListener('submit', submitEditAvatarForm);
 
-setEventListeners(formEditAvatar);
-setEventListeners(formEditProfile);
-setEventListeners(newCardForm);
-
-function renderInitialCards(data, user) { 
+function renderInitialCards(data, userId) { 
     data.forEach((item) => { 
-        placesList.append(createCard(item, handleDelete, pressLikeButton, zoomImg, user));
+        placesList.append(createCard(item, handleDelete, pressLikeButton, zoomImg, userId));
     })
 }
 
 Promise.all([getUserInfo(), getInitialCards()]).then(([userData, cards]) => {
     renderInitialCards(cards, userData._id);
+    renderUserInfo(userData.name, userData.about, userData.avatar);
 })
-
-getUserInfo().then((result) => {
-        renderUserInfo(result.name, result.about, result.avatar)
-    })
-    .catch((err) => {
-        console.log(err);
-    });
 
 function renderUserInfo(userName, userDesc, userAvatar) {
     profileTitle.textContent = userName;
     profileDesc.textContent = userDesc;
-    profileImg.style.backgroundImage = `url(${userAvatar})`
+    profileImg.style.backgroundImage = `url(${userAvatar})`;
+    nameInput.value = userName; 
+    jobInput.value = userDesc;
 }
 
 function renderLoading(isLoading, submitButton) {
-    if(isLoading) {
-        submitButton.textContent = 'Сохранение...'
-    } else {
-        submitButton.textContent = 'Сохранить'
-    }
+    submitButton.textContent = isLoading ? 'Сохранение...' : 'Сохранить';
 }
 
-
+enableValidation(validationConfig);
